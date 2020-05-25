@@ -1,6 +1,6 @@
 #SingleInstance force
-#Include /RagnarokVCR/Localization/RO2ESP/Class_SQLiteDB.ahk
-#Include /RagnarokVCR/Localization/RO2ESP/VDKmodule.ahk
+#Include libs/Class_SQLiteDB.ahk
+#Include libs/VDKmodule.ahk
 
 center := (A_ScreenWidth - 270) / 2
 
@@ -13,9 +13,9 @@ Menu, Tray, Add, &Cerrar, GuiClose
 Menu, Tray, Default, &Guía de Referencia
 
 Gui, Add, Text, x90 y10 w50 vstringvdk,
-Gui, Add, Text, x17 y55 w270 h30 vmsg, Preparando RO2ESP, espera un momento...
 Gui, Add, Text, x260 y10 w60 vupdate,
 Gui, Add, Text, x70 y30 w60 vlink,
+Gui, Add, Text, x17 y55 w270 h30 vmsg, Preparando RO2ESP, espera un momento...
 Gui, Add, Button, x15 y120 guninstall, Desinstalar
 Gui, Add, Button, Default x225 y120 ghelper, Guía de Referencia
 Gui, Add, Button, x225 y85 wp hidden guiget vuiget, Descargar gráficos
@@ -29,138 +29,80 @@ Gui, Add, Progress, x15 y85 hidden w200 h20 -Smooth vMyProgress, 0
 ; Generated using SmartGUI Creator 4.0
 Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
 
-FileGetTime actual, %A_ScriptName%
-Fileinstall, sqlite3.dll, sqlite3.dll
-Fileinstall, zlib1.dll, zlib1.dll
-UrlDownloadToFile, http://tiny.cc/RO2INI, version.ini
-
-IniRead, state, version.ini, Version, Launcher, %A_SPACE%
-
-If (state > actual)
-	GuiControl,,msg, Hay una nueva versión de RO2ESP.`nVisita el link en RO2ESP.ini.
-
-; Initial setup
-	IfNotExist Data\1\TRADUCCION.VDK
-	{
-		FileDelete RO2ESP.ini
-		GuiControl,,stringvdk,Ausente
-	}
-	else GuiControl,,stringvdk, Presente
-
-	IfNotExist Data\1\GRAFICOS.VDK
-	{
-		IniWrite, Originales, version.ini, Version, Graficos
-		GuiControl,,link, Originales
-		GuiControl,Show,uiget
-	}
-	else GuiControl,,link, Traducidos
+;Initial Setup
+	goSub Setup
 
 	If FileExist("Data\1\MAPS.VDK")
 		FileMove, Data\1\MAPS.VDK, Data\1\MINIMAP.VDK, 1 ; Restore minimap
+
 	If FileExist("Data\1\ENGLISH.VDK")
 		FileMove, Data\1\ENGLISH.VDK, Data\1\STRING.VDK, 1 ; Restore strings
 
-	IniRead, maps, RO2ESP.ini, Version, Graficos, %A_SPACE%
+	If FileExist("Data\1\TRADUCCION.VDK")
+		GuiControl,,stringvdk, Presente
+	else
+		GuiControl,,stringvdk,Ausente
 
-	If !FileExist("Desinstalar_RO2ESP.bat")
-		FileAppend,
-		(
-			@echo off
-			dir /b /s
-			move /Y "%A_ScriptDir%\Data\1\MAPS.VDK" "%A_ScriptDir%\Data\1\MINIMAP.VDK"
-			move /Y "%A_ScriptDir%\Data\1\ENGLISH.VDK" "%A_ScriptDir%\Data\1\STRING.VDK"
-			del "%A_ScriptDir%\Data\1\TRADUCCION.VDK"
-			del "%A_ScriptDir%\Data\1\GRAFICOS.VDK"
-			del "%A_ScriptDir%\sqlite3.dll"
-			del "%A_ScriptDir%\zlib1.dll"
-			del "%A_ScriptDir%\Guia.DB"
-			del "%A_ScriptDir%\RO2Esp.ini"
-			rmdir "%A_ScriptDir%\Ext"
-			del "%A_ScriptFullPath%"
-			del "%A_ScriptDir%\Desinstalar_RO2ESP.bat"
-		), %A_ScriptDir%\Desinstalar_RO2ESP.bat
+	IfNotExist Data\1\GRAFICOS.VDK
+	{
+		GuiControl,,link, Originales
+		GuiControl,Show,uiget
 
-	If !maps
-		IfNotExist Data\1\GRAFICOS.VDK
-		{
+		IniRead, maps, RO2ESP.ini, Version, Graficos, %A_SPACE%
+		if !maps
 			MsgBox,4,Paquete de gráficos,Está disponible un paquete opcional que traduce mapas`ny gráficos del juego, ¿deseas descargarlo? (Peso: 45Mb).
 			IfMsgBox Yes
-			{
-			uiget:
-				GuiControl,Hide,uiget
-				GuiControl,,msg, Descargando el paquete de gráficos...
-				Run RO2Client.exe ; We call the launcher before applying our mods
-				Download("Data\1\GRAFICOS.VDK","http://tiny.cc/RO2MAPS", "GRAFICOS.VDK")
-				GuiControl,,msg, Gráficos descargados correctamente.
-				IniWrite, Traducidos, RO2ESP.ini, Version, Graficos
-				reload
-			return
-			}
-		}
-
-	GuiControlGet,maps,,link
-	IniWrite,%link%, version.ini, Version, Graficos
-
-Process, Exist, Launcher2.exe ; We check if the launcher is already running
-if !ErrorLevel ; Game isn't running, we have to load it.
-{
-	Process, Exist, Rag2.exe ; Check if a previous instance of the game is running
-	If ErrorLevel ; The game is up, so we have to bypass the patcher
-		Run Shipping\Rag2.exe /IP=login.playragnarok2.com /FROM=-FromLauncher /STARTER=1 /LANGCODE=1
+				SetTimer uiget, -50
+			else
+				IniWrite, Originales, RO2ESP.ini, Version, Graficos
+	}
 	else
-		Run RO2Client.exe ; We call the launcher before applying our mods
-}
+		GuiControl,,link, Traducidos
 
-	; Let's check the version, or if we have goods at all.
-	IniRead, version, version.ini, Version, STRING.VDK, %A_SPACE%
+; Running the game before applying mods
+	Process, Exist, Launcher2.exe ; If launcher isn't open, we run it.
+	if !ErrorLevel
+	{
+		Process, Exist, Rag2.exe ; Check if a previous instance of the game is running, if it is we bypass the patcher
+		If ErrorLevel
+			Run Shipping\Rag2.exe /IP=login.playragnarok2.com /FROM=-FromLauncher /STARTER=1 /LANGCODE=1
+		else
+			Run RO2Client.exe
+	}
+
+	; We check if an update is needed
+	FormatTime, verdate, %version%, ShortDate
 	IniRead, last, RO2ESP.ini, Version, STRING.VDK, %A_SPACE%
 
-	if !last or (version > last)
+	if (version > last) or !FileExist("Data\1\TRADUCCION.VDK")
 	{
 		GuiControl,,msg, Descargando una nueva traducción...
-		Download("STRING.VDK","http://tiny.cc/RO2TEXT", "STRING.VDK")
+		Download("Data\1\TRADUCCION.VDK","https://github.com/Raikuha/RO2ESP/raw/master/STRING.VDK", "TRADUCCION.VDK")
+		GuiControl,, stringvdk,Presente
+		GuiControl,,msg, Traducción descargada.
+
+		MsgBox,,Nuevos Cambios - %verdate%, %Changelog%
 	}
-
-	IfExist STRING.VDK
-		FileMove, STRING.VDK, Data\1\TRADUCCION.VDK ,1 ; Updating translation
-
-	FileCopy, Data\1\STRING.VDK, Data\1\ENGLISH.VDK ,1 ; Back up strings
+	GuiControl,,update, %verdate%
 
 	; We create a DB for reference
-	SetTimer, CreateGuide, -100 
-
-	GuiControl,, stringvdk,Presente
-
-	FormatTime, version, %version%, ShortDate
-	GuiControl,,update, %version%
-
-	FileMove, version.ini, RO2ESP.ini, 1
-
-	If FileExist("STRING.VDK")
-	{
-		IniRead, logs, RO2ESP.ini, Changelog,, %A_SPACE%
-		MsgBox,,Nuevos Cambios - %version%, %logs%
-	}
-
-	GuiControl,,msg, Preparando archivos...
+	SetTimer, CreateGuide, -1 
 
 	Loop ; We force a stop until the launcher finishes updating or whatever.
 	{
+		GuiControl,,msg, Preparando archivos...
 		WinGetText, ready, Ragnarok2 Launcher
 		if ready contains Update has been completed.
 		break
 	}
 
+	FileMove, Data\1\STRING.VDK, Data\1\ENGLISH.VDK ,1 ; Back up strings
 	FileCopy, Data\1\TRADUCCION.VDK, Data\1\STRING.VDK, 1 ;Apply translation
 
-	IfExist Data\1\GRAFICOS.VDK
-	{
-		FileMove, Data\1\MINIMAP.VDK, Data\1\MAPS.VDK ; Back up minimap
-		FileCopy, Data\1\GRAFICOS.VDK, Data\1\MINIMAP.VDK, 1 ; Apply translated graphics
-	}
+	FileMove, Data\1\MINIMAP.VDK, Data\1\MAPS.VDK ; Back up minimap
+	FileCopy, Data\1\GRAFICOS.VDK, Data\1\MINIMAP.VDK, 1 ; Apply translated graphics
 
-	;Compatibility with other languages multi clients
-	IniRead, lang, RO2_option.ini, NATION_CODE, LANGUAGE, %A_SPACE%
+	IniRead, lang, RO2_option.ini, NATION_CODE, LANGUAGE, %A_SPACE%	;Preserve original language for multiple clients
 	IniWrite, 1, RO2_option.ini, NATION_CODE, LANGUAGE
 
 	GuiControl,,msg, Traducción aplicada. Ya puedes jugar.
@@ -174,15 +116,75 @@ if !ErrorLevel ; Game isn't running, we have to load it.
 	Gui, Cancel
 	TrayTip , RO2ESP, RO2ESP permanece abierto para que puedas acceder a la`nGuía de Referencia y abrir otros clientes de RO2., 10
 	Process, WaitClose, Rag2.exe
-		FileRemoveDir,Ext,1
-		FileRemoveDir,Ext
-		ExitApp
+	ExitApp
 return
 
 GuiClose:
-	FileRemoveDir,Ext,1
-	FileRemoveDir,Ext
 	ExitApp
+
+Setup:
+	; "Installing" required files
+	Fileinstall, sqlite3.dll, sqlite3.dll ; Used to write and read a database of original vs translated strings
+	Fileinstall, zlib1.dll, zlib1.dll ; Used to decompress vdks
+
+	If !FileExist("Desinstalar_RO2ESP.bat") ; Used to delete all created files
+		FileAppend,
+		(
+			@echo off
+			move /Y "%A_ScriptDir%\Data\1\MAPS.VDK" "%A_ScriptDir%\Data\1\MINIMAP.VDK"
+			move /Y "%A_ScriptDir%\Data\1\ENGLISH.VDK" "%A_ScriptDir%\Data\1\STRING.VDK"
+			del "%A_ScriptDir%\Data\1\TRADUCCION.VDK"
+			del "%A_ScriptDir%\Data\1\GRAFICOS.VDK"
+			del "%A_ScriptDir%\sqlite3.dll"
+			del "%A_ScriptDir%\zlib1.dll"
+			del "%A_ScriptDir%\Guia.DB"
+			del "%A_ScriptDir%\RO2Esp.ini"
+			rmdir "%A_ScriptDir%\Ext"
+			del "%A_ScriptFullPath%"
+			del "%A_ScriptDir%\Desinstalar_RO2ESP.bat"
+		), %A_ScriptDir%\Desinstalar_RO2ESP.bat
+
+	; Read version info from github
+	hObject:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	hObject.Open("GET","https://github.com/Raikuha/RO2ESP/raw/master/version.ini")
+	hObject.Send()
+	Config := hObject.ResponseText
+
+	for varname,key in {State:"Launcher", Version:"STRING.VDK"}
+	{
+		; Check latest launcher and translation version
+		regex := "iU)[\s\QVersion\E\s].*\R\s*\Q" key "\E\s*=(.*)\R"
+		RegExMatch(Config, regex, value)
+		%varname% := value1
+	}
+
+	; Read Changelog
+	regex := "is)(\[\s?\QChangelog\E\s?].+?)\["
+	RegExMatch(Config . "[", regex, value)
+	Changelog := value1
+
+	FileGetTime actual, %A_ScriptName% ; Current launcher version
+
+	If (State > actual) ; Update launcher if a new version is out
+	{
+		Download("NewRO2ESP.exe","https://github.com/Raikuha/RO2ESP/releases/latest/download/RO2ESP.exe", "RO2ESP.exe")
+		Run NewRO2ESP.exe
+		ExitApp
+	}
+
+	If !FileExist("RO2ESP.ini")
+		FileOpen("RO2ESP.ini", "w").Write(hObject.ResponseText)
+return
+
+uiget:
+	GuiControl,Hide,uiget
+	GuiControl,,msg, Descargando el paquete de gráficos...
+	Download("Data\1\GRAFICOS.VDK","https://github.com/Raikuha/RO2ESP/releases/latest/download/GRAFICOS.VDK", "GRAFICOS.VDK")
+
+	GuiControl,,msg, Gráficos descargados correctamente.
+	GuiControl,,link, Traducidos
+	IniWrite, Traducidos, RO2ESP.ini, Version, Graficos
+return
 
 runner:
 	Run Shipping\Rag2.exe /IP=login.playragnarok2.com /FROM=-FromLauncher /STARTER=1 /LANGCODE=1
@@ -197,12 +199,6 @@ uninstall:
 	}
 return
 
-
-2GuiClose:
-	DB.Close()
-	Gui, 2:destroy
-return
-	
 helper:
 ; Example: Tab control:
 Gui, 2:New, +HwndGuiHwnd, Guía de Referencia
@@ -235,7 +231,8 @@ Gui, Show, x%center% y190 h500 w550, Guía de Referencia
 		MsgBox, 16, SQLite Error, % "Msg:`t" . DB.ErrorMsg . "`nCode:`t" . DB.ErrorCode
 		ExitApp
 	}
-GoSub Reader
+
+	GoSub Reader
 return
 
 Reader:
@@ -350,31 +347,41 @@ CreateGuide:
 	DB.Exec("END TRANSACTION")
 	DB.Exec("VACUUM")
 	DB.Close()
+
+	FileRemoveDir,Ext,1
+	FileRemoveDir,Ext
+return
+
+2GuiClose:
+	DB.Close()
+	Gui, 2:destroy
 return
 
 Download(path_p, dLocation_p, filename_p)
-{  global path, dLocation, FullFileName, FullSize
-   path = %path_p%
-   dLocation = %dLocation_p%
-   FullFileName = %filename_p%
-   FullSize := HttpQueryInfo(dLocation, 5) / (1024 * 1024) ; get download file size in mbytes
-   SetTimer, GetSize, 20
-   UrlDownloadToFile, %dLocation%, %path%
-   SetTimer, GetSize, Off
-   GuiControl,Hide, MyProgress
-   GuiControl,,MyProgress, 0
-   Return
+{
+	global path, dLocation, FullFileName, FullSize
+	path = %path_p%
+	dLocation = %dLocation_p%
+	FullFileName = %filename_p%
+
+	FullSize := HttpQueryInfo(dLocation, 5) / (1024 * 1024) ; get download file size in mbytes
+	SetTimer, GetSize, 20
+	UrlDownloadToFile, %dLocation%, %path%
+	SetTimer, GetSize, Off
+	GuiControl,Hide, MyProgress
+	GuiControl,,MyProgress, 0
+	Return
 }
 
 GetSize:
-   FileOpen(path, "r")
-   FileGetSize, FSize, %path%, M ; Get local file size in mb
-   UpdateSize := Floor((FSize / FullSize) * 100) ; get percentage
-   IfEqual, FSize, FullSize, Return
-   IfNotEqual, ErrorLevel, 1
-      GuiControl,Show, MyProgress
-      GuiControl,, MyProgress, %UpdateSize%
-      GuiControl,, msg,% UpdateSize "% descargado - " FullFileName
+	FileOpen(path, "r")
+	FileGetSize, FSize, %path%, M ; Get local file size in mb
+	UpdateSize := Floor((FSize / FullSize) * 100) ; get percentage
+	IfEqual, FSize, FullSize, Return
+	IfNotEqual, ErrorLevel, 1
+		GuiControl,Show, MyProgress
+		GuiControl,, MyProgress, %UpdateSize%
+		GuiControl,, msg,% UpdateSize "% descargado - " FullFileName
 Return
 
 
