@@ -17,5 +17,3 @@ Actualización 24/04/2020
 - Finalmente traduje los nombres de los Executer. Ahora serán Sicarios.
 ----------------------------------------------------------------
 Si encuentras problemas entra en discord.gg/RZ6VnG6, gracias.
-
-Si el programa no se actualiza, visita bit.ly/RO2_ESP
