@@ -7,27 +7,27 @@ center := (A_ScreenWidth - 270) / 2
 Menu, Tray, NoStandard ; remove standard Menu items
 Menu, Tray, Tip, RO2ESP
 Menu, Tray, Click, 1
-Menu, Tray, Add, &Guía de Referencia, helper
+Menu, Tray, Add, &GuÃ­a de Referencia, helper
 Menu, Tray, Add, &Nuevo Cliente, runner
 Menu, Tray, Add, &Cerrar, GuiClose
-Menu, Tray, Default, &Guía de Referencia
+Menu, Tray, Default, &GuÃ­a de Referencia
 
 Gui, Add, Text, x90 y10 w50 vstringvdk,
 Gui, Add, Text, x260 y10 w60 vupdate,
 Gui, Add, Text, x70 y30 w60 vlink,
 Gui, Add, Text, x17 y55 w270 h30 vmsg, Preparando RO2ESP, espera un momento...
 Gui, Add, Button, x15 y120 guninstall, Desinstalar
-Gui, Add, Button, Default x225 y120 ghelper, Guía de Referencia
-Gui, Add, Button, x225 y85 wp hidden guiget vuiget, Descargar gráficos
+Gui, Add, Button, Default x225 y120 ghelper, GuÃ­a de Referencia
+Gui, Add, Button, x225 y85 wp hidden guiget vuiget, Descargar grÃ¡ficos
 
 Gui, Font, bold
-Gui, Add, Text, x15 y10 w50, Traducción:
-Gui, Add, Text, x205 y10 w50, Versión:
-Gui, Add, Text, x17 y30 w30, Gráficos:
+Gui, Add, Text, x15 y10 w50, TraducciÃ³n:
+Gui, Add, Text, x205 y10 w50, VersiÃ³n:
+Gui, Add, Text, x17 y30 w30, GrÃ¡ficos:
 Gui, Add, Progress, x15 y85 hidden w200 h20 -Smooth vMyProgress, 0
 
 ; Generated using SmartGUI Creator 4.0
-Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
+Gui, Show, x%center% y10 h150 w350, RO2 en EspaÃ±ol por Raikuha
 
 ;Initial Setup
 	goSub Setup
@@ -50,7 +50,7 @@ Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
 
 		IniRead, maps, RO2ESP.ini, Version, Graficos, %A_SPACE%
 		if !maps
-			MsgBox,4,Paquete de gráficos,Está disponible un paquete opcional que traduce mapas`ny gráficos del juego, ¿deseas descargarlo? (Peso: 45Mb).
+			MsgBox,4,Paquete de grÃ¡ficos,EstÃ¡ disponible un paquete opcional que traduce mapas`ny grÃ¡ficos del juego, Â¿deseas descargarlo? (Peso: 45Mb).
 			IfMsgBox Yes
 				SetTimer uiget, -50
 			else
@@ -70,16 +70,18 @@ Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
 			Run RO2Client.exe
 	}
 
+	sleep 50
+
 	; We check if an update is needed
 	FormatTime, verdate, %version%, ShortDate
 	IniRead, last, RO2ESP.ini, Version, STRING.VDK, %A_SPACE%
 
 	if (version > last) or !FileExist("Data\1\TRADUCCION.VDK")
 	{
-		GuiControl,,msg, Descargando una nueva traducción...
-		Download("Data\1\TRADUCCION.VDK","https://github.com/Raikuha/RO2ESP/raw/master/STRING.VDK", "TRADUCCION.VDK")
+		GuiControl,,msg, Descargando una nueva traducciÃ³n...
+		Download("Data\1\TRADUCCION.VDK","https://github.com/Raikuha/RO2ESP/releases/latest/download/STRING.VDK", "TRADUCCION.VDK")
 		GuiControl,, stringvdk,Presente
-		GuiControl,,msg, Traducción descargada.
+		GuiControl,,msg, TraducciÃ³n descargada.
 
 		MsgBox,,Nuevos Cambios - %verdate%, %Changelog%
 	}
@@ -105,7 +107,7 @@ Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
 	IniRead, lang, RO2_option.ini, NATION_CODE, LANGUAGE, %A_SPACE%	;Preserve original language for multiple clients
 	IniWrite, 1, RO2_option.ini, NATION_CODE, LANGUAGE
 
-	GuiControl,,msg, Traducción aplicada. Ya puedes jugar.
+	GuiControl,,msg, TraducciÃ³n aplicada. Ya puedes jugar.
 
 	Process, Wait, Rag2.exe ; Wait for the game to be running
 	IniWrite, %lang%, RO2_option.ini, NATION_CODE, LANGUAGE
@@ -114,7 +116,7 @@ Gui, Show, x%center% y10 h150 w350, RO2 en Español por Raikuha
 		FileMove, NewRO2ESP.exe, RO2ESP.exe, 1
 
 	Gui, Cancel
-	TrayTip , RO2ESP, RO2ESP permanece abierto para que puedas acceder a la`nGuía de Referencia y abrir otros clientes de RO2., 10
+	TrayTip , RO2ESP, RO2ESP permanece abierto para que puedas acceder a la`nGuÃ­a de Referencia y abrir otros clientes de RO2., 10
 	Process, WaitClose, Rag2.exe
 	ExitApp
 return
@@ -178,10 +180,10 @@ return
 
 uiget:
 	GuiControl,Hide,uiget
-	GuiControl,,msg, Descargando el paquete de gráficos...
-	Download("Data\1\GRAFICOS.VDK","https://github.com/Raikuha/RO2ESP/releases/latest/download/GRAFICOS.VDK", "GRAFICOS.VDK")
+	GuiControl,,msg, Descargando el paquete de grÃ¡ficos...
+	Download("Data\1\GRAFICOS.VDK","https://github.com/Raikuha/RO2ESP/releases/download/v2404/GRAFICOS.VDK", "GRAFICOS.VDK")
 
-	GuiControl,,msg, Gráficos descargados correctamente.
+	GuiControl,,msg, GrÃ¡ficos descargados correctamente.
 	GuiControl,,link, Traducidos
 	IniWrite, Traducidos, RO2ESP.ini, Version, Graficos
 return
@@ -191,7 +193,7 @@ runner:
 return
 
 uninstall:
-	MsgBox, 4,Desintalar RO2ESP, ¿Deseas desinstalar RO2ESP completamente?
+	MsgBox, 4,Desintalar RO2ESP, Â¿Deseas desinstalar RO2ESP completamente?
 	IfMsgBox Yes
 	{
 		Run Desinstalar_RO2ESP.bat,,hide 
@@ -201,7 +203,7 @@ return
 
 helper:
 ; Example: Tab control:
-Gui, 2:New, +HwndGuiHwnd, Guía de Referencia
+Gui, 2:New, +HwndGuiHwnd, GuÃ­a de Referencia
 Gui, %GuiHwnd%:Default
 Gui, Add, Button, x10 y6 default vbutton gReader, Buscar
 Gui, Add, Edit, x+5 y7 vid w200
@@ -210,15 +212,15 @@ Gui, Add, Edit, x+5 gReader yp-3 limit6 vpage Number w50
 Gui, Add, UpDown, 0x80 vpager Range1-1, 1
 Gui, Add, Text, x+10 yp+3 w50 vpagecount, of 1
 Gui, Add, Tab2, xm w520 h400 gReader vlist, Objetos|Habilidades|NPCs|Lugares ; Tab2 vs. Tab requires v1.0.47.05.
-Gui, Add, ListView, vObjetos r20 w500, Inglés|Español
+Gui, Add, ListView, vObjetos r20 w500, InglÃ©s|EspaÃ±ol
 Gui, Tab, 2
-Gui, Add, ListView, vHabilidades r20 w500, Inglés|Español
+Gui, Add, ListView, vHabilidades r20 w500, InglÃ©s|EspaÃ±ol
 Gui, Tab, 3
-Gui, Add, ListView, vNPCs r20 w500, Inglés|Español
+Gui, Add, ListView, vNPCs r20 w500, InglÃ©s|EspaÃ±ol
 Gui, Tab, 4
-Gui, Add, ListView, vLugares r20 w500, Inglés|Español
+Gui, Add, ListView, vLugares r20 w500, InglÃ©s|EspaÃ±ol
 Gui, Tab  ; i.e. subsequently-added controls will not belong to the tab control.
-Gui, Show, x%center% y190 h500 w550, Guía de Referencia
+Gui, Show, x%center% y190 h500 w550, GuÃ­a de Referencia
 
 	While FileExist("Guia.DB-journal")
 		sleep 250
